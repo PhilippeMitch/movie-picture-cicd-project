@@ -26,7 +26,7 @@ jobs:
       runs-on: ubuntu-latest
       
       environment:
-            name: Deployment
+            name: development
       
       steps:
         - name: Checkout code

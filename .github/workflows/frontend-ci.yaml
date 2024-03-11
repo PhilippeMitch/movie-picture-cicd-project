@@ -3,7 +3,7 @@ name: Frontend Continuous Integration
 
 # Triggers for the workflow
 on:
-    # Manual trigger using the workflow_dispatch event
+  # Manual trigger using the workflow_dispatch event
   workflow_dispatch:
   
   # Automatic trigger on pull request events targeting the main branch
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     
     environment:
-          name: Deployment
+          name: development
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
