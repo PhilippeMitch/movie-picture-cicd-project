@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     
     environment:
-          name: Deployment
+          name: development
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
