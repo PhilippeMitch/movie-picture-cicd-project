@@ -3,16 +3,14 @@ name: Frontend Continuous Deployment
 
 # Triggers for the workflow
 on:
-    # Manual trigger using the workflow_dispatch event
+  # Manual trigger using the workflow_dispatch event
   workflow_dispatch:
-  
   # Automatic trigger on merge to the main branch
   pull_request:
     branches:
       - main
     # Execute the action on closed (merged) PR.
     types: [closed]
-
     paths:
       - 'frontend/**'
 
