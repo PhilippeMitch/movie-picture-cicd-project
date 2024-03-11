@@ -1,0 +1,53 @@
+# Workflow name
+name: Backend Continuous Integration
+
+# Triggers for the workflow
+on:
+  # Manual trigger using the workflow_dispatch event
+  workflow_dispatch:
+
+  # Automatic trigger on pull request events targeting the main branch
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+env:
+  # Set Python Version
+  PYTHON_VERSION: '3.10'
+
+defaults:
+    run:
+        working-directory: ./backend
+jobs:
+  # Runs & Tests Liting
+  runs_and_tests_linting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.PYTHON_VERSION}}
+    
+      - name: Install dependencies
+        run: |
+          pip install pipenv --user
+
+          pipenv install
+            
+          pip install flake8
+
+      - name: Runs Linting
+        id: lint
+        run: pipenv run lint
+
+      - name: Test Linting
+        id: tests
+        run: pipenv run test
+
+  
