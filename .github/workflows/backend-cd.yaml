@@ -20,8 +20,8 @@ defaults:
   run:
     working-directory: ./backend
 
+# Jobs defined in the workflow
 jobs:
-  # Continuous Integration job
     backend_cd:
       runs-on: ubuntu-latest
       
