@@ -1,0 +1,120 @@
+# Workflow name
+name: Frontend Continuous Integration
+
+# Triggers for the workflow
+on:
+    # Manual trigger using the workflow_dispatch event
+  workflow_dispatch:
+  
+  # Automatic trigger on pull request events targeting the main branch
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+
+defaults:
+    run:
+        working-directory: ./frontend
+
+env:
+  # Set Node.js Version
+  NODE_VERSION: '18.x'
+
+# Jobs defined in the workflow
+jobs:
+  # Lint Job
+  LINT-JOB:
+    runs-on: ubuntu-latest
+    
+    environment:
+          name: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{env.NODE_VERSION}}
+      
+      - name: Restore cache
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+    
+      - name: Install dependencies
+        run: npm install
+
+      - name: Running linter
+        id: lint
+        run: npm run lint --fix
+
+  # Test Job
+  TEST-JOB:
+    runs-on: ubuntu-latest
+    
+    environment:
+          name: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{env.NODE_VERSION}}
+      
+      - name: Restore cache
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+    
+      - name: Install dependencies
+        run: npm install
+
+      - name: Tests
+        id: tests
+        run: CI=true npm test
+
+  BUILD-JOB:
+    needs: [LINT-JOB, TEST-JOB]
+    runs-on: ubuntu-latest
+    
+    environment:
+          name: Deployment
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{env.NODE_VERSION}}
+      
+      - name: Restore cache
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+    
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Tests
+        id: tests
+        run: CI=true npm test

@@ -1,0 +1,81 @@
+# Workflow name
+name: Frontend Continuous Deployment
+
+# Triggers for the workflow
+on:
+    # Manual trigger using the workflow_dispatch event
+  workflow_dispatch:
+  
+  # Automatic trigger on merge to the main branch
+  pull_request:
+    branches:
+      - main
+    # Execute the action on closed (merged) PR.
+    types: [closed]
+
+    paths:
+      - 'frontend/**'
+
+defaults:
+    run:
+        working-directory: ./frontend
+
+env:
+  # Set Node.js Version
+  NODE_VERSION: '18.x'
+  BACKEND_URL: ${{ secrets.REACT_APP_MOVIE_API_URL }}
+  ECR_REPOSITORY: frontend
+
+
+jobs:
+  frontend_cd:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: development
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Linting
+        id: lint
+        run: npm run lint --fix
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{env.NODE_VERSION}}
+
+      - name: Tests
+        id: tests
+        run: CI=true npm test --passWithNoTests
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build the docker image
+        run: |
+              docker build --build-arg=REACT_APP_MOVIE_API_URL=$BACKEND_URL --tag=${{ secrets.DOCKERHUB_USERNAME }}/frontend:${GITHUB_SHA::7} .
+              docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${GITHUB_SHA::7}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Logging into ECR to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push docker image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          docker build --build-arg=REACT_APP_MOVIE_API_URL=$BACKEND_URL -t $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
