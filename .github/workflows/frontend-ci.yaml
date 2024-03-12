@@ -120,4 +120,5 @@ jobs:
 
       - name: Build the docker image
         run: |
+              cd starter/frontend
               docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${GITHUB_SHA::7} .
