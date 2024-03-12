@@ -12,7 +12,6 @@ on:
       - main
     # Execute the action on closed (merged) PR.
     types: [closed]
-
     paths:
       - 'starter/backend/**'
 
@@ -57,6 +56,7 @@ jobs:
 
         - name: Build the docker image
           run: |
+                cd starter/backend/
                 docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:${GITHUB_SHA::7} .
                 docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend:${GITHUB_SHA::7}
 
@@ -85,7 +85,7 @@ jobs:
             ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
             ECR_REPOSITORY: backend
           run: |
-              cd /starter/backend/k8s
+              cd starter/backend/k8s
               kustomize edit set image backend=$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
 
         - name: Push docker image to ECR
@@ -98,5 +98,5 @@ jobs:
         - name: Deploy application to EKS Cluster
 
           run: |
-              cd /starter/backend/k8s
+              cd starter/backend/k8s
               kustomize build | kubectl apply -f -
