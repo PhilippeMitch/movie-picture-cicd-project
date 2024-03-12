@@ -11,18 +11,15 @@ on:
     branches:
       - main
     paths:
-      - 'backend/**'
+      - 'starter/backend/**'
 
 env:
   # Set Python Version
   PYTHON_VERSION: '3.10'
 
-defaults:
-    run:
-        working-directory: ./backend
 jobs:
-  # Runs & Tests Liting
-  runs_and_tests_linting:
+  # Runs Liting
+  LINT-JOB:
     runs-on: ubuntu-latest
 
     steps:
@@ -36,18 +33,70 @@ jobs:
     
       - name: Install dependencies
         run: |
-          pip install pipenv --user
-
-          pipenv install
-            
-          pip install flake8
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
 
       - name: Runs Linting
         id: lint
-        run: pipenv run lint
+        uses: py-actions/flake8@v2
+        with:
+          ignore: "E501" 
+
+  # Tests Liting
+  TEST-JOB:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.PYTHON_VERSION}}
+    
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
 
       - name: Test Linting
         id: tests
-        run: pipenv run test
+        run: |
+          cd starter/backend && pytest
 
+  # builds the application          
+  BUILD-JOB:
+    needs: [LINT-JOB, TEST-JOB]
+    runs-on: ubuntu-latest
+    
+    environment:
+          name: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{env.PYTHON_VERSION}}
+    
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Tests
+        id: tests
+        run: cd starter/backend && pytest
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build the docker image
+        run: |
+              docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:${GITHUB_SHA::7} .
   
