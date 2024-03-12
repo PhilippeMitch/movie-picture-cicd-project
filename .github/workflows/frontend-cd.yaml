@@ -46,16 +46,10 @@ jobs:
         run: cd starter/frontend && npm run test
         continue-on-error: false
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build the docker image
+      - name: Build the application using docker
         run: |
-              docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.BACKEND_URL }} --tag=${{ secrets.DOCKERHUB_USERNAME }}/frontend:${GITHUB_SHA::7} .
-              docker push ${{ secrets.DOCKERHUB_USERNAME }}/frontend:${GITHUB_SHA::7}
+              cd starter/frontend
+              docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.BACKEND_URL }} --tag=$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7} .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -68,19 +62,8 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Push docker image to ECR
-        env:
-          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
-        run: |
-          docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.BACKEND_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7} .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
-
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v2
-
-      - name: Logging into ECR to Amazon ECR
-        id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Configure kubeconfig file
         env:
@@ -93,18 +76,18 @@ jobs:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
           ECR_REPOSITORY: frontend
         run: |
-            cd ./starter/frontend/k8s
+            cd starter/frontend/k8s
             kustomize edit set image frontend=$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
 
       - name: Push docker image to ECR
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7} .
+          cd starter/frontend
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
 
       - name: Deploy application to EKS Cluster
 
         run: |
-            cd ./starter/frontend/k8s
+            cd starter/frontend/k8s
             kustomize build | kubectl apply -f -
