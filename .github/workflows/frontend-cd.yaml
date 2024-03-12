@@ -35,15 +35,22 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{env.NODE_VERSION}}
+      
+      - name: Install dependencies
+        run: cd frontend && npm ci
         
       - name: Linting
         id: lint
-        run: cd starter/frontend && npm run lint --fix
+        run: |
+          cd starter/frontend
+          npm run lint
         continue-on-error: false
 
       - name: Tests
         id: tests
-        run: cd starter/frontend && npm run test
+        run: |
+          cd starter/frontend
+          npm run test
         continue-on-error: false
 
       - name: Build the application using docker
