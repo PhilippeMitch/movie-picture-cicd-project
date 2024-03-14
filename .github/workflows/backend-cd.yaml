@@ -15,6 +15,9 @@ on:
     paths:
       - 'starter/backend/**'
 
+env:
+  KUBECTL_VERSION: "v1.25.4"
+
 # Jobs defined in the workflow
 jobs:
     backend_cd:
@@ -66,6 +69,12 @@ jobs:
             aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
             aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
             aws-region: us-east-1
+        
+        - name: Install kubectl
+          id: kubectl-installer
+          uses: azure/setup-kubectl@v3
+          with:
+            version: ${{ env.KUBECTL_VERSION }}
 
         - name: Install kustomize
           uses: imranismail/setup-kustomize@v2
