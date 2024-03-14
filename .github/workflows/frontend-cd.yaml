@@ -67,11 +67,11 @@ jobs:
       - name: Build the application using docker
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
-          IMAGE_TAG: ${GITHUB_SHA::7}
+          IMAGE_TAG: ${{ GITHUB_SHA::7 }}
         run: |
               cd starter/frontend
               docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.BACKEND_URL }} --tag=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-              
+
       - name: Install kubectl
         id: kubectl-installer
         uses: azure/setup-kubectl@v3
@@ -90,7 +90,7 @@ jobs:
       - name: Configure image
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
-          IMAGE_TAG: ${GITHUB_SHA::7}
+          IMAGE_TAG: ${{ GITHUB_SHA::7 }}
         run: |
             cd starter/frontend/k8s
             kustomize edit set image frontend=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
@@ -98,7 +98,7 @@ jobs:
       - name: Push docker image to ECR
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
-          IMAGE_TAG: ${GITHUB_SHA::7}
+          IMAGE_TAG: ${{ GITHUB_SHA::7 }}
         run: |
           cd starter/frontend
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

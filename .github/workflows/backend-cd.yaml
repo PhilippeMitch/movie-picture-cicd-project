@@ -93,7 +93,7 @@ jobs:
           env:
             ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
             ECR_REPOSITORY: backend
-            IMAGE_TAG: ${GITHUB_SHA::7}
+            IMAGE_TAG: ${{ GITHUB_SHA::7 }}
           run: |
               cd starter/backend/k8s
               kustomize edit set image backend=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
@@ -101,7 +101,7 @@ jobs:
         - name: Push docker image to ECR
           env:
             ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
-            IMAGE_TAG: ${GITHUB_SHA::7}
+            IMAGE_TAG: ${{ GITHUB_SHA::7 }}
           run: |
             docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
