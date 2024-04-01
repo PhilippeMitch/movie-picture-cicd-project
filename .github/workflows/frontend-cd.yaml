@@ -64,12 +64,16 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Export the Load Balancer External IP
+        run: |
+          export EXTERNALIP=$(kubectl get svc backend -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}{"\n"}		{.status.loadBalancer.ingress[0].ip}')
+
       - name: Build the application using docker
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
         run: |
               cd starter/frontend
-              docker build --build-arg=REACT_APP_MOVIE_API_URL=${{ env.BACKEND_URL }} --tag=$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7} .
+              docker build --build-arg=REACT_APP_MOVIE_API_URL=http://$EXTERNALIP --tag=$ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7} .
 
       - name: Install kubectl
         id: kubectl-installer
@@ -100,8 +104,10 @@ jobs:
           cd starter/frontend
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
 
-      - name: Deploy application to EKS Cluster
+      - name: Verify entire Kubeconfig file
+        run: kubectl config view
 
+      - name: Deploy application to EKS Cluster
         run: |
             cd starter/frontend/k8s
             kustomize build | kubectl apply -f -
