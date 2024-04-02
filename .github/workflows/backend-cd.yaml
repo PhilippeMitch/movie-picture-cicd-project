@@ -59,7 +59,7 @@ jobs:
 
         - name: Build the docker image
           run: |
-                cd starter/backend/
+                cd starter/backend
                 docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/backend:${GITHUB_SHA::7} .
                 docker push ${{ secrets.DOCKERHUB_USERNAME }}/backend:${GITHUB_SHA::7}
 
@@ -101,11 +101,13 @@ jobs:
           env:
             ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
           run: |
-            cd starter/backend/
+            cd starter/backend
             docker push $ECR_REGISTRY/$ECR_REPOSITORY:${GITHUB_SHA::7}
 
-        - name: Deploy application to EKS Cluster
+        - name: Verify entire Kubeconfig file
+          run: kubectl config view
 
+        - name: Deploy application to EKS Cluster
           run: |
               cd starter/backend/k8s
               kustomize build | kubectl apply -f -
