@@ -149,6 +149,12 @@ resource "aws_eks_cluster" "main" {
     endpoint_public_access  = var.enable_private == true ? false : true
     endpoint_private_access = true
   }
+
+  access_config {
+    authentication_mode                         = "API_AND_CONFIG_MAP"
+    bootstrap_cluster_creator_admin_permissions = true
+  }
+  
   depends_on = [aws_iam_role_policy_attachment.eks_cluster, aws_iam_role_policy_attachment.eks_service]
 }
 
