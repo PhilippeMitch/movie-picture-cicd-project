@@ -21,7 +21,71 @@ env:
   KUBECTL_VERSION: "v1.25.4"
 
 jobs:
-  frontend_cd:
+
+  # Lint Job
+  LINT-JOB:
+    runs-on: ubuntu-latest
+    
+    environment:
+          name: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{env.NODE_VERSION}}
+      
+      - name: Restore cache
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+    
+      - name: Install dependencies
+        run: cd starter/frontend && npm ci
+
+      - name: Running linter
+        id: lint
+        run: cd starter/frontend && npm run lint --fix
+
+  # Test Job
+  TEST-JOB:
+    runs-on: ubuntu-latest
+    
+    environment:
+          name: development
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{env.NODE_VERSION}}
+      
+      - name: Restore cache
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+    
+      - name: Install dependencies
+        run: cd starter/frontend && npm ci
+
+      - name: Tests
+        id: tests
+        run: cd starter/frontend && npm run test
+
+  BUILD-JOB:
+    needs: [LINT-JOB, TEST-JOB]
     runs-on: ubuntu-latest
 
     environment:
